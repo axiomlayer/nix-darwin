@@ -1,7 +1,7 @@
 {
   "schema": "axiomlayer-nix-darwin-integration-v1",
   "upstream": "nix-darwin/nix-darwin",
-  "fork": "AxiomLayer/nix-darwin",
+  "fork": "axiomlayer/nix-darwin",
   "version": "nix-darwin-26.05",
   "releaseBranch": "nix-darwin-26.05",
   "sourceCommit": "c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74",
@@ -17,13 +17,13 @@
   },
   "fleetConsumers": {
     "dotfiles": {
-      "repository": "AxiomLayer/dotfiles",
+      "repository": "axiomlayer/dotfiles",
       "revision": "ee9c1a27542f7918a30d9e9e33155baea2b96c8a",
       "pullRequest": 49,
       "surface": "nix/checks/evaluation.nix"
     },
     "margay": {
-      "repository": "AxiomLayer/margay",
+      "repository": "axiomlayer/margay",
       "revision": "da44c4cbf434606fc58ae8028897dd520ab40afb",
       "pullRequest": 8,
       "surface": "darwinConfigurations.margay"
@@ -31,7 +31,15 @@
   },
   "nix": {
     "version": "2.35.2",
-    "installUrl": "https://releases.nixos.org/nix/nix-2.35.2/install"
+    "installUrl": "https://releases.nixos.org/nix/nix-2.35.2/install",
+    "installerSha256": "9adda97297d9e8ab360df95c729eabff4f4f93d6db091953c3a68f29e3fb130c",
+    "wrapperSha256": "32f1d65f344e07584dfa0f6573395b1a9e2b6ec99d39e6fa461a790ff867436a",
+    "binaryTarballSha256": {
+      "aarch64-darwin": "1695c13aba5afa7c2ecd6dc4a9393f602e7bbc440ed45e81602c831546580ec3",
+      "x86_64-darwin": "d725518d89f3b0b8d4af702a9d38d519814014cbe125afb3ed0545c9d755f6a5",
+      "aarch64-linux": "4d0302a2910f5eec1c33b8deef634f04899a75737e7001ec49908d003ae5efda",
+      "x86_64-linux": "0c3960a9792331a22081c3c7a5d8465db9b17c50b3acdf18587fa4c6f2cb1158"
+    }
   },
   "nixpkgs": {
     "upstream": "NixOS/nixpkgs",

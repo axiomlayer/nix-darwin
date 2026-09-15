@@ -2,12 +2,13 @@ name: AxiomLayer nix-darwin integration
 
 on:
   pull_request:
+    branches:
+      - master
   push:
     branches:
       - master
   schedule:
     - cron: "23 7 * * *"
-    - cron: "41 8 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -24,23 +25,43 @@ env:
 
 jobs:
   contract:
-    if: github.repository == 'AxiomLayer/nix-darwin'
+    if: >-
+      github.repository == 'axiomlayer/nix-darwin' &&
+      ((github.event_name == 'pull_request' && github.base_ref == 'master' &&
+      startsWith(github.ref, 'refs/pull/') && endsWith(github.ref, '/merge')) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master' &&
+      github.ref_protected == true) ||
+      ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/master' && github.ref_protected == true &&
+      github.workflow_ref == 'axiomlayer/nix-darwin/.github/workflows/axiomlayer-integration.yml@refs/heads/master'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Check out the true fork with release history
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          clean: true
           fetch-depth: 0
           persist-credentials: false
       - name: Verify fork ancestry, pins, action SHAs, and inert upstream paths
         run: |
           python3 .axiomlayer/check.py verify --live
           python3 -m unittest discover -s .axiomlayer -p 'test_*.py' -v
-          bash -n .axiomlayer/run-darwin-gate.sh scripts/release.sh
+          bash -n \
+            .axiomlayer/install-nix-ci.sh \
+            .axiomlayer/run-darwin-gate.sh \
+            scripts/release.sh
 
   darwin-evaluation:
-    if: github.repository == 'AxiomLayer/nix-darwin'
+    if: >-
+      github.repository == 'axiomlayer/nix-darwin' &&
+      ((github.event_name == 'pull_request' && github.base_ref == 'master' &&
+      startsWith(github.ref, 'refs/pull/') && endsWith(github.ref, '/merge')) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master' &&
+      github.ref_protected == true) ||
+      ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/master' && github.ref_protected == true &&
+      github.workflow_ref == 'axiomlayer/nix-darwin/.github/workflows/axiomlayer-integration.yml@refs/heads/master'))
     needs: contract
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -50,23 +71,24 @@ jobs:
       - name: Check out the true fork with release history
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          clean: true
           fetch-depth: 0
           persist-credentials: false
-      - name: Install the fleet-pinned Nix without a GitHub token
-        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.35.2/install
-          github_access_token: ''
-          extra_nix_config: |
-            accept-flake-config = false
-            flake-registry =
+      - name: Install the byte-pinned Nix with a scrubbed environment
+        run: sh .axiomlayer/install-nix-ci.sh
       - name: Evaluate both Darwin architectures without activation
         run: bash .axiomlayer/run-darwin-gate.sh evaluate "$CANDIDATE_KIND"
 
   darwin-native-build:
     if: >-
-      github.repository == 'AxiomLayer/nix-darwin' &&
-      (github.event_name != 'schedule' || github.event.schedule == '41 8 * * 1')
+      github.repository == 'axiomlayer/nix-darwin' &&
+      ((github.event_name == 'pull_request' && github.base_ref == 'master' &&
+      startsWith(github.ref, 'refs/pull/') && endsWith(github.ref, '/merge')) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master' &&
+      github.ref_protected == true) ||
+      ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/master' && github.ref_protected == true &&
+      github.workflow_ref == 'axiomlayer/nix-darwin/.github/workflows/axiomlayer-integration.yml@refs/heads/master'))
     needs: contract
     timeout-minutes: 60
     strategy:
@@ -84,23 +106,27 @@ jobs:
       - name: Check out the true fork with release history
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          clean: true
           fetch-depth: 0
           persist-credentials: false
-      - name: Install the fleet-pinned Nix without a GitHub token
-        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.35.2/install
-          github_access_token: ''
-          extra_nix_config: |
-            accept-flake-config = false
-            flake-registry =
+      - name: Install the byte-pinned Nix with a scrubbed environment
+        run: sh .axiomlayer/install-nix-ci.sh
       - name: Evaluate both Darwin architectures and build the native closure
         run: >-
           bash .axiomlayer/run-darwin-gate.sh
           native "$CANDIDATE_KIND" "${{ matrix.system }}"
 
   promotion-gate:
-    if: github.repository == 'AxiomLayer/nix-darwin' && always()
+    if: >-
+      always() &&
+      (github.repository == 'axiomlayer/nix-darwin' &&
+      ((github.event_name == 'pull_request' && github.base_ref == 'master' &&
+      startsWith(github.ref, 'refs/pull/') && endsWith(github.ref, '/merge')) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master' &&
+      github.ref_protected == true) ||
+      ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/master' && github.ref_protected == true &&
+      github.workflow_ref == 'axiomlayer/nix-darwin/.github/workflows/axiomlayer-integration.yml@refs/heads/master')))
     needs:
       - contract
       - darwin-evaluation
@@ -115,4 +141,4 @@ jobs:
         run: |
           test "$CONTRACT_RESULT" = success
           test "$EVALUATION_RESULT" = success
-          case "$NATIVE_RESULT" in success | skipped) ;; *) exit 1 ;; esac
+          test "$NATIVE_RESULT" = success

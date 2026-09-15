@@ -1,7 +1,7 @@
 # AxiomLayer nix-darwin integration
 
 This directory is the read-only integration boundary between the true
-`AxiomLayer/nix-darwin` fork and the fleet. The authoritative snapshot comes
+`axiomlayer/nix-darwin` fork and the fleet. The authoritative snapshot comes
 from dotfiles pull request 49:
 
 - release branch: `nix-darwin-26.05`
@@ -23,30 +23,46 @@ adapter, post-activation composition, and both Darwin architectures.
 
 Every pull request evaluates the exact locked source and the pull request
 candidate. A daily hosted Linux canary evaluates both Darwin architectures
-against current upstream `master`; a weekly hosted Apple silicon and Intel
-pair builds the native closures. A manual dispatch also tests current upstream
-`master`. The gate never activates a configuration.
+against current upstream `master`; the same daily run uses a hosted Apple
+silicon and Intel pair to build the native closures. A manual dispatch also
+tests current upstream `master`. The gate never activates a configuration.
 
 The two private consumer revisions are provenance labels only. CI never checks
 out a private repository, receives a cross-repository token, or inherits an
 organization secret. Secret-shaped inputs are explicit fabricated literals.
-No cache signing, publishing, deployment, enrollment, passphrase, or
-encryption authority exists in this workflow.
+No cache signing, publishing, release, synchronization, deployment,
+environment, enrollment, passphrase, or encryption authority exists in this
+workflow.
 
 ## Fork isolation
 
-The inherited switch/uninstall test jobs and Pages jobs are guarded so they
-only execute in `nix-darwin/nix-darwin`. The release script refuses before its
-first Git mutation unless `origin` is the canonical upstream repository. All
-third-party Actions use reviewed full commit SHAs, checkout credentials are
-discarded, and the AxiomLayer workflow has read-only contents permission.
+The inherited switch/uninstall and Pages workflows are preserved as `.disabled`
+snapshots under `.github/upstream-workflows/`, outside GitHub's executable
+workflow directory. Their upstream-owner guards remain as defense in depth.
+The release script refuses before its first Git mutation unless `origin` is the
+canonical upstream repository. All third-party Actions use reviewed full commit
+SHAs, and every checkout requires a clean tree and discards credentials. The
+AxiomLayer workflow has read-only contents permission and uses only dated
+GitHub-hosted runner labels.
+
+Every executable job binds to the exact lowercase
+`axiomlayer/nix-darwin` identity. Pull requests are accepted only for `master`
+merge refs; pushes require protected `master`; scheduled and manual runs also
+require protected `master` and the exact default-branch identity of
+`.github/workflows/axiomlayer-integration.yml`.
+
+Hosted jobs install Nix through `.axiomlayer/install-nix-ci.sh`. The wrapper
+pins Nix 2.35.2, verifies the official launcher SHA-256, selects and requires
+the matching embedded tarball digest for all four supported Darwin/Linux
+architectures, and invokes the reviewed launcher under `env -i`. Its exact
+bytes are independently pinned in `pins.json` and `check.py`.
 
 Run the local static and provenance proof with:
 
 ```console
 python3 .axiomlayer/check.py verify --live
 python3 -m unittest discover -s .axiomlayer -p 'test_*.py' -v
-bash -n .axiomlayer/run-darwin-gate.sh scripts/release.sh
+bash -n .axiomlayer/install-nix-ci.sh .axiomlayer/run-darwin-gate.sh scripts/release.sh
 ```
 
 The Nix evaluation/build commands require the fleet-pinned Nix 2.35.2. They

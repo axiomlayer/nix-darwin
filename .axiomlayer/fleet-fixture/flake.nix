@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/c3eea5b2156db11c7eeeada3dc737711255b253e";
 
     nix-darwin = {
-      url = "github:AxiomLayer/nix-darwin/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74";
+      url = "github:axiomlayer/nix-darwin/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
