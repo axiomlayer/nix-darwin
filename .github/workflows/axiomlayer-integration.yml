@@ -1,0 +1,118 @@
+name: AxiomLayer nix-darwin integration
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "23 7 * * *"
+    - cron: "41 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: axiomlayer-nix-darwin-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FLEET_TEST_RUNNER_TOKEN: fabricated-nix-darwin-enrollment-token
+  FLEET_TEST_PASSPHRASE: fabricated-nix-darwin-passphrase
+  FLEET_TEST_ENCRYPTION_KEY: fabricated-nix-darwin-encryption-key
+
+jobs:
+  contract:
+    if: github.repository == 'AxiomLayer/nix-darwin'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the true fork with release history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify fork ancestry, pins, action SHAs, and inert upstream paths
+        run: |
+          python3 .axiomlayer/check.py verify --live
+          python3 -m unittest discover -s .axiomlayer -p 'test_*.py' -v
+          bash -n .axiomlayer/run-darwin-gate.sh scripts/release.sh
+
+  darwin-evaluation:
+    if: github.repository == 'AxiomLayer/nix-darwin'
+    needs: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CANDIDATE_KIND: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'upstream-master' || 'candidate' }}
+    steps:
+      - name: Check out the true fork with release history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the fleet-pinned Nix without a GitHub token
+        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.35.2/install
+          github_access_token: ''
+          extra_nix_config: |
+            accept-flake-config = false
+            flake-registry =
+      - name: Evaluate both Darwin architectures without activation
+        run: bash .axiomlayer/run-darwin-gate.sh evaluate "$CANDIDATE_KIND"
+
+  darwin-native-build:
+    if: >-
+      github.repository == 'AxiomLayer/nix-darwin' &&
+      (github.event_name != 'schedule' || github.event.schedule == '41 8 * * 1')
+    needs: contract
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            system: aarch64-darwin
+          - runner: macos-15-intel
+            system: x86_64-darwin
+    runs-on: ${{ matrix.runner }}
+    env:
+      CANDIDATE_KIND: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'upstream-master' || 'candidate' }}
+    steps:
+      - name: Check out the true fork with release history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the fleet-pinned Nix without a GitHub token
+        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.35.2/install
+          github_access_token: ''
+          extra_nix_config: |
+            accept-flake-config = false
+            flake-registry =
+      - name: Evaluate both Darwin architectures and build the native closure
+        run: >-
+          bash .axiomlayer/run-darwin-gate.sh
+          native "$CANDIDATE_KIND" "${{ matrix.system }}"
+
+  promotion-gate:
+    if: github.repository == 'AxiomLayer/nix-darwin' && always()
+    needs:
+      - contract
+      - darwin-evaluation
+      - darwin-native-build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every scheduled proof
+        env:
+          CONTRACT_RESULT: ${{ needs.contract.result }}
+          EVALUATION_RESULT: ${{ needs.darwin-evaluation.result }}
+          NATIVE_RESULT: ${{ needs.darwin-native-build.result }}
+        run: |
+          test "$CONTRACT_RESULT" = success
+          test "$EVALUATION_RESULT" = success
+          case "$NATIVE_RESULT" in success | skipped) ;; *) exit 1 ;; esac
