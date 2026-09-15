@@ -4,8 +4,6 @@ set -euo pipefail
 
 origin_url=$(git remote get-url origin 2>/dev/null || true)
 case "$origin_url" in
-  https://github.com/nix-darwin/nix-darwin | \
-  https://github.com/nix-darwin/nix-darwin.git | \
   git@github.com:nix-darwin/nix-darwin | \
   git@github.com:nix-darwin/nix-darwin.git | \
   ssh://git@github.com/nix-darwin/nix-darwin | \

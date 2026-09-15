@@ -885,8 +885,8 @@ def download(url: str, limit: int = 5 * 1024 * 1024) -> bytes:
 
 def verify_live_provenance(pins: dict) -> None:
     ref = "refs/heads/" + pins["releaseBranch"]
-    upstream_sha = ls_remote("https://github.com/nix-darwin/nix-darwin.git", ref)
-    fork_sha = ls_remote("https://github.com/axiomlayer/nix-darwin.git", ref)
+    upstream_sha = ls_remote("git@github.com:nix-darwin/nix-darwin.git", ref)
+    fork_sha = ls_remote("git@github.com:axiomlayer/nix-darwin.git", ref)
     if upstream_sha != pins["sourceCommit"] or fork_sha != pins["sourceCommit"]:
         refuse(
             "the upstream and fork release branches no longer agree with the locked commit"
@@ -961,7 +961,7 @@ def materialize(pins: dict, revision_kind: str, destination: Path) -> None:
     elif revision_kind == "candidate":
         revision = "HEAD"
     elif revision_kind == "upstream-master":
-        upstream_url = "https://github.com/nix-darwin/nix-darwin.git"
+        upstream_url = "git@github.com:nix-darwin/nix-darwin.git"
         expected = ls_remote(upstream_url, "refs/heads/master")
         run(
             "git",
