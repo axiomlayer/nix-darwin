@@ -1,0 +1,66 @@
+{
+  "schema": "axiomlayer-nix-darwin-integration-v1",
+  "upstream": "nix-darwin/nix-darwin",
+  "fork": "axiomlayer/nix-darwin",
+  "version": "nix-darwin-26.05",
+  "releaseBranch": "nix-darwin-26.05",
+  "sourceCommit": "c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74",
+  "sourceArchive": {
+    "url": "https://codeload.github.com/axiomlayer/nix-darwin/tar.gz/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74",
+    "promotionUrl": "https://install.axiomlayer.com/nix-inputs/nix-darwin/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74/source.tar.gz",
+    "sha256": "1f73979fb4ecbfb1fb4a3869fc8386c5d437f0f5f5850e655e9a9777aaf284ce",
+    "narHash": "sha256-2cp6N3rrwnGYLTx9l6N+NI+kwrCWxvJUbj5WJhvB29A="
+  },
+  "releaseMetadata": {
+    "release": "26.05",
+    "isReleaseBranch": true
+  },
+  "fleetConsumers": {
+    "dotfiles": {
+      "repository": "axiomlayer/dotfiles",
+      "revision": "ee9c1a27542f7918a30d9e9e33155baea2b96c8a",
+      "pullRequest": 49,
+      "surface": "nix/checks/evaluation.nix"
+    },
+    "margay": {
+      "repository": "axiomlayer/margay",
+      "revision": "da44c4cbf434606fc58ae8028897dd520ab40afb",
+      "pullRequest": 8,
+      "surface": "darwinConfigurations.margay"
+    }
+  },
+  "nix": {
+    "version": "2.35.2",
+    "installUrl": "https://releases.nixos.org/nix/nix-2.35.2/install",
+    "installerSha256": "9adda97297d9e8ab360df95c729eabff4f4f93d6db091953c3a68f29e3fb130c",
+    "wrapperSha256": "32f1d65f344e07584dfa0f6573395b1a9e2b6ec99d39e6fa461a790ff867436a",
+    "binaryTarballSha256": {
+      "aarch64-darwin": "1695c13aba5afa7c2ecd6dc4a9393f602e7bbc440ed45e81602c831546580ec3",
+      "x86_64-darwin": "d725518d89f3b0b8d4af702a9d38d519814014cbe125afb3ed0545c9d755f6a5",
+      "aarch64-linux": "4d0302a2910f5eec1c33b8deef634f04899a75737e7001ec49908d003ae5efda",
+      "x86_64-linux": "0c3960a9792331a22081c3c7a5d8465db9b17c50b3acdf18587fa4c6f2cb1158"
+    }
+  },
+  "nixpkgs": {
+    "upstream": "NixOS/nixpkgs",
+    "revision": "c3eea5b2156db11c7eeeada3dc737711255b253e",
+    "narHash": "sha256-vdhpDJ3Lr24lkZ+fDCjmBRRtw9/vcSzkqGJOJyF5h2U="
+  },
+  "systems": [
+    "aarch64-darwin",
+    "x86_64-darwin"
+  ],
+  "actions": {
+    "actions/checkout": "11d5960a326750d5838078e36cf38b85af677262",
+    "actions/deploy-pages": "d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e",
+    "actions/upload-pages-artifact": "56afc609e74202658d3ffba0e8f6dda462b719fa",
+    "cachix/install-nix-action": "13d8dd58da0234aa297dedd986986ccb8e7f3e24"
+  },
+  "hostAcceptance": [
+    "margay-activation",
+    "margay-self-runner-enrollment",
+    "margay-cold-boot-resume",
+    "margay-gui-rendering",
+    "margay-homebrew-and-mas-convergence"
+  ]
+}
